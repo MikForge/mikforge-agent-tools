@@ -1,0 +1,21 @@
+{
+  "name": "mikforge",
+  "interface": {
+    "displayName": "MikForge Tools"
+  },
+  "plugins": [
+    {
+      "name": "docloom",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/MikForge/docloom-plugin.git",
+        "ref": "main"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development & Workflow"
+    }
+  ]
+}

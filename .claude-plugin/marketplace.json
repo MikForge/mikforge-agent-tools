@@ -1,0 +1,22 @@
+{
+  "name": "mikforge",
+  "description": "MikForge Tools",
+  "owner": {
+    "name": "MikForge"
+  },
+  "plugins": [
+    {
+      "name": "docloom",
+      "source": {
+        "source": "github",
+        "repo": "MikForge/docloom-plugin",
+        "ref": "main"
+      },
+      "description": "Document generation and management pipeline",
+      "author": {
+        "name": "MikForge"
+      },
+      "category": "development"
+    }
+  ]
+}
