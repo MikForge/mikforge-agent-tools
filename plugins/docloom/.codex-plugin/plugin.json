@@ -1,6 +1,5 @@
 {
   "name": "docloom",
-  "version": "1.0.7",
   "description": "Closed-loop documentation quality pipeline — init, register, brainstorm, build-spec, author, review, fix, and entropy analysis for continuous spec improvement.",
   "author": {
     "name": "MikForge"
@@ -18,7 +17,7 @@
       "quality-assurance",
       "workflow-automation"
     ],
-    "websiteURL": "https://github.com/MikForge/docloom-plugin",
+    "websiteURL": "https://github.com/MikForge/mikforge-agent-tools",
     "defaultPrompt": [
       "Review this document against its spec",
       "Generate a feedback note for this PRD",
