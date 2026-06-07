@@ -7,9 +7,8 @@
     {
       "name": "docloom",
       "source": {
-        "source": "url",
-        "url": "https://github.com/MikForge/docloom-plugin.git",
-        "ref": "main"
+        "source": "local",
+        "path": "./plugins/docloom"
       },
       "policy": {
         "installation": "AVAILABLE",

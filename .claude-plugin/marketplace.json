@@ -7,10 +7,7 @@
   "plugins": [
     {
       "name": "docloom",
-      "source": {
-        "source": "github",
-        "repo": "MikForge/docloom-plugin"
-      },
+      "source": "./plugins/docloom",
       "description": "Closed-loop documentation quality pipeline — init, brainstorm, build-spec, author, review, fix, and entropy analysis for continuous spec improvement",
       "author": {
         "name": "MikForge"
