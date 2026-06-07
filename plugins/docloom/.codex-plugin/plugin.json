@@ -1,0 +1,28 @@
+{
+  "name": "docloom",
+  "version": "1.0.7",
+  "description": "Closed-loop documentation quality pipeline — init, register, brainstorm, build-spec, author, review, fix, and entropy analysis for continuous spec improvement.",
+  "author": {
+    "name": "MikForge"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Docloom",
+    "shortDescription": "Structured doc pipeline: brainstorm → spec → author → review → fix → entropy.",
+    "longDescription": "End-to-end documentation quality system: project initialization and document type registration → collaborative brainstorming with interactive approval → type-specific spec generation → structured authoring with embedded schemas → automated review against spec-derived checklists → context-mode fix consumption with brainstorm-assisted refinement → entropy analysis of fix patterns driving continuous spec evolution.",
+    "developerName": "MikForge",
+    "category": "developer-tools",
+    "capabilities": [
+      "documentation",
+      "code-review",
+      "quality-assurance",
+      "workflow-automation"
+    ],
+    "websiteURL": "https://github.com/MikForge/docloom-plugin",
+    "defaultPrompt": [
+      "Review this document against its spec",
+      "Generate a feedback note for this PRD",
+      "Analyze fix patterns and suggest spec improvements"
+    ]
+  }
+}

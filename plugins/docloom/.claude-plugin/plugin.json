@@ -1,0 +1,19 @@
+{
+  "name": "docloom",
+  "version": "1.0.7",
+  "description": "Closed-loop documentation quality pipeline — init, register, brainstorm, build-spec, author, review, fix, and entropy analysis for continuous spec improvement.",
+  "author": {
+    "name": "MikForge",
+    "url": "https://github.com/MikForge"
+  },
+  "homepage": "https://github.com/MikForge/docloom-plugin",
+  "repository": "https://github.com/MikForge/docloom-plugin",
+  "license": "MIT",
+  "keywords": [
+    "documentation",
+    "review",
+    "spec",
+    "pipeline"
+  ],
+  "skills": "./skills/"
+}

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {},
+  "description": "Docloom MCP configuration. No external MCP servers required for core pipeline operation. Add document-source integrations here (e.g., Confluence, Notion, Google Docs) to enable direct document import.",
+  "integrations": {
+    "document_sources": {
+      "description": "Configure external document sources for import into the docloom pipeline.",
+      "providers": {}
+    }
+  }
+}
