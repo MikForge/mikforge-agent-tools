@@ -11,7 +11,7 @@ AI agent plugin marketplace by MikForge.
 ### Add marketplace (once)
 
 ```bash
-claude plugin marketplace add mikforge github:MikForge/mikforge-agent-tools
+claude plugin marketplace add MikForge/mikforge-agent-tools
 ```
 
 ### Install globally
@@ -38,12 +38,24 @@ claude plugin install <name>@mikforge --scope local
 
 Writes to `.claude/settings.local.json` (gitignore'd) — affects only you.
 
+### Browse available plugins
+
+```bash
+# List all available plugins from this marketplace
+claude plugin list --available --json | jq '.available[] | select(.marketplaceName == "mikforge")'
+
+# List all configured marketplaces
+claude plugin marketplace list
+```
+
 ### Manage
 
 ```bash
-claude plugin list                         # List installed
-claude plugin update <name>@mikforge      # Update
-claude plugin uninstall <name>@mikforge   # Remove
+claude plugin list                                 # List installed
+claude plugin install <name>@mikforge             # Install
+claude plugin update <name>@mikforge              # Update plugin
+claude plugin uninstall <name>@mikforge           # Remove
+claude plugin marketplace update mikforge          # Refresh plugin catalog
 ```
 
 ---

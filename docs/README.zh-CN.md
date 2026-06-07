@@ -11,7 +11,7 @@ MikForge 的 AI Agent 插件商店。
 ### 添加源（仅一次）
 
 ```bash
-claude plugin marketplace add mikforge github:MikForge/mikforge-agent-tools
+claude plugin marketplace add MikForge/mikforge-agent-tools
 ```
 
 ### 全局安装
@@ -38,12 +38,24 @@ claude plugin install <name>@mikforge --scope local
 
 写入 `.claude/settings.local.json`（gitignore 忽略），不影响他人。
 
+### 查看可用插件
+
+```bash
+# 查看本市场有哪些插件可安装
+claude plugin list --available --json | jq '.available[] | select(.marketplaceName == "mikforge")'
+
+# 查看已添加的市场列表
+claude plugin marketplace list
+```
+
 ### 管理
 
 ```bash
-claude plugin list                          # 查看已安装
-claude plugin update <name>@mikforge       # 更新
-claude plugin uninstall <name>@mikforge    # 卸载
+claude plugin list                                 # 查看已安装
+claude plugin install <name>@mikforge             # 安装
+claude plugin update <name>@mikforge              # 升级插件
+claude plugin uninstall <name>@mikforge           # 卸载
+claude plugin marketplace update mikforge          # 刷新插件目录
 ```
 
 ---

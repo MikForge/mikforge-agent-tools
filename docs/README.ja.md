@@ -11,7 +11,7 @@ AI エージェントプラグインマーケットプレイス by MikForge。
 ### マーケットプレイス追加（初回のみ）
 
 ```bash
-claude plugin marketplace add mikforge github:MikForge/mikforge-agent-tools
+claude plugin marketplace add MikForge/mikforge-agent-tools
 ```
 
 ### グローバルインストール
@@ -38,12 +38,24 @@ claude plugin install <name>@mikforge --scope local
 
 `.claude/settings.local.json`（gitignore 対象）に書き込み。
 
+### 利用可能なプラグインの確認
+
+```bash
+# このマーケットプレイスのプラグイン一覧
+claude plugin list --available --json | jq '.available[] | select(.marketplaceName == "mikforge")'
+
+# 設定済みマーケットプレイスの一覧
+claude plugin marketplace list
+```
+
 ### 管理
 
 ```bash
-claude plugin list                          # 一覧表示
-claude plugin update <name>@mikforge       # 更新
-claude plugin uninstall <name>@mikforge    # 削除
+claude plugin list                                 # 一覧表示
+claude plugin install <name>@mikforge             # インストール
+claude plugin update <name>@mikforge              # プラグイン更新
+claude plugin uninstall <name>@mikforge           # 削除
+claude plugin marketplace update mikforge          # カタログ更新
 ```
 
 ---
