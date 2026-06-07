@@ -1,4 +1,0 @@
-# Shell scripts — local tooling, not for distribution
-*.sh
-sync.yaml
-sync.yaml.bak
