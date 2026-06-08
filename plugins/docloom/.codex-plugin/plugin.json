@@ -1,27 +1,27 @@
 {
   "name": "docloom",
-  "description": "Closed-loop documentation quality pipeline — init, register, brainstorm, build-spec, author, review, fix, and entropy analysis for continuous spec improvement.",
+  "description": "闭环文档质量流水线 — 初始化、注册、头脑风暴、构建规格、编写、审查、修复、熵分析，持续改进文档质量。",
   "author": {
     "name": "MikForge"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "Docloom",
-    "shortDescription": "Structured doc pipeline: brainstorm → spec → author → review → fix → entropy.",
-    "longDescription": "End-to-end documentation quality system: project initialization and document type registration → collaborative brainstorming with interactive approval → type-specific spec generation → structured authoring with embedded schemas → automated review against spec-derived checklists → context-mode fix consumption with brainstorm-assisted refinement → entropy analysis of fix patterns driving continuous spec evolution.",
+    "shortDescription": "快速上手：/docloom-init 初始化项目 → /docloom-build-spec 生成规格 → /docloom-author 编写文档。完成后用 /docloom-fix 修复问题，/docloom-entropy 驱动演进。",
+    "longDescription": "初始化（init）：/docloom-init 初始化项目文档体系，注册文档类型，建立规格目录结构，为后续流水线打好基础。\n\n构建规格（build-spec）：/docloom-build-spec 根据注册的文档类型，交互式生成结构化规格文档，明确每个文档应包含的章节、字段和质量标准。\n\n编写（author）：/docloom-author 基于已生成的规格，进行结构化文档编写，确保输出严格遵循规格定义。\n\n修复（fix）：/docloom-fix 对照规格自动审查已有文档，发现偏离规格的问题并辅助修复。\n\n熵管理（entropy）：/docloom-entropy 分析历史修复记录，识别高频修复模式，将修复反馈回规格，实现规格的持续演进与收敛。",
     "developerName": "MikForge",
-    "category": "developer-tools",
+    "category": "开发者工具",
     "capabilities": [
-      "documentation",
-      "code-review",
-      "quality-assurance",
-      "workflow-automation"
+      "文档",
+      "代码审查",
+      "质量保证",
+      "工作流自动化"
     ],
     "websiteURL": "https://github.com/MikForge/mikforge-agent-tools",
     "defaultPrompt": [
-      "Review this document against its spec",
-      "Generate a feedback note for this PRD",
-      "Analyze fix patterns and suggest spec improvements"
+      "初始化项目文档体系",
+      "为这个模块生成结构化规格文档",
+      "基于规格编写这份文档"
     ]
   }
 }
