@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# sync-plugin.sh — Sync external sources into a plugin via from→to mapping
+# sync-plugin.sh — Sync skills from source list to a single target, bump version on change
 # Usage: ./scripts/sync-plugin.sh <plugin-name>
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -19,40 +19,42 @@ abort() { echo "Error: $*" >&2; exit 1; }
 
 SYNC_JSON="$SCRIPT_DIR/plugins/$PLUGIN_NAME/sync.json"
 INTEGRITY_JSON="$SCRIPT_DIR/plugins/$PLUGIN_NAME/integrity.json"
-PLUGIN_DIR="$ROOT_DIR/plugins/$PLUGIN_NAME"
+CLAUDE_MANIFEST="$ROOT_DIR/plugins/$PLUGIN_NAME/.claude-plugin/plugin.json"
+CODEX_MANIFEST="$ROOT_DIR/plugins/$PLUGIN_NAME/.codex-plugin/plugin.json"
 
 [[ -f "$SYNC_JSON" ]] || abort "sync.json not found: $SYNC_JSON"
 
 # ---- parse sync.json ----
-# Extracts from→to pairs from: { "sync": [ { "from": "...", "to": "..." }, ... ] }
+# Format: { "source": ["/path/1", "/path/2"], "target": "rel/path" }
 
-FROM_PATHS=()
-TO_PATHS=()
+SOURCES=()
+TARGET=""
 
-in_sync=false first=true
+in_source=false first=true
 while IFS= read -r line; do
-  if [[ "$line" =~ \"sync\" ]]; then
-    in_sync=true
+  if [[ "$line" =~ \"source\" ]]; then
+    in_source=true
     continue
   fi
-  if $in_sync; then
+  if $in_source; then
     $first && { [[ "$line" =~ \[ ]] && { first=false; continue; }; }
     first=false
-    [[ "$line" =~ ^[[:space:]]*\] ]] && break
-
-    if [[ "$line" =~ \"from\" ]]; then
-      # Extract the value (last quoted string on the line, after the key)
-      f="$(echo "$line" | grep -oE '"[^"]*"' | tail -1 | sed 's/"//g')"
-      [[ -n "$f" ]] && FROM_PATHS+=("$f")
-    elif [[ "$line" =~ \"to\" ]]; then
-      t="$(echo "$line" | grep -oE '"[^"]*"' | tail -1 | sed 's/"//g')"
-      [[ -n "$t" ]] && TO_PATHS+=("$t")
+    if [[ "$line" =~ ^[[:space:]]*\] ]]; then
+      in_source=false
+      continue
     fi
+    val="$(echo "$line" | grep -oE '"[^"]*"' | head -1 | sed 's/"//g')"
+    [[ -n "$val" ]] && SOURCES+=("$val")
+  fi
+  if [[ "$line" =~ \"target\" ]]; then
+    TARGET="$(echo "$line" | grep -oE '"[^"]*"' | tail -1 | sed 's/"//g')"
   fi
 done < "$SYNC_JSON"
 
-[[ ${#FROM_PATHS[@]} -gt 0 ]] || abort "no sync entries found in sync.json"
-[[ ${#FROM_PATHS[@]} -eq ${#TO_PATHS[@]} ]] || abort "mismatched from/to pairs in sync.json"
+[[ ${#SOURCES[@]} -gt 0 ]] || abort "no source entries in sync.json"
+[[ -n "$TARGET" ]] || abort "no target in sync.json"
+
+TARGET_DIR="$ROOT_DIR/$TARGET"
 
 # ---- helpers ----
 
@@ -65,7 +67,7 @@ dir_hash() {
   find "$dir" -type f | LC_ALL=C sort | xargs md5 -q 2>/dev/null | md5 -q
 }
 
-read_integrity_hash() {
+read_json_str() {
   local file="$1" key="$2"
   if [[ ! -f "$file" ]]; then
     echo ""
@@ -74,30 +76,32 @@ read_integrity_hash() {
   grep -F "\"$key\"" "$file" 2>/dev/null | head -1 | sed 's/.*:[[:space:]]*"\([^"]*\)".*/\1/' || true
 }
 
-write_integrity_json() {
-  local file="$1"
-  shift
-  if [[ $# -eq 0 ]]; then
-    printf '{\n}\n' > "$file"
-    return
+# ---- semver ----
+
+is_semver() {
+  [[ "$1" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+}
+
+bump_patch() {
+  local v="$1"
+  local major minor patch
+  IFS='.' read -r major minor patch <<<"$v"
+  [[ -n "$major" && -n "$minor" && -n "$patch" ]] || abort "invalid version: $v"
+  echo "$major.$minor.$((patch + 1))"
+}
+
+write_manifest_version() {
+  local file="$1" version="$2"
+  if grep -q '"version"' "$file" 2>/dev/null; then
+    # Update existing version field
+    VERSION="$version" perl -pi -e 's/^(\s*)"version"\s*:\s*"[^"]*"/$1"version": "$ENV{VERSION}"/' "$file"
+  else
+    # Add version after opening brace
+    perl -pi -e 's/^\{/\{\n  "version": "NEW_VERSION",/' "$file"
+    local escaped
+    escaped="$(printf '%s\n' "$version" | sed 's/[&/\]/\\&/g')"
+    sed -i '' "s/NEW_VERSION/$escaped/" "$file"
   fi
-  printf '{\n' > "$file"
-  local count=$#
-  local i=1
-  while [[ $i -le $# ]]; do
-    local key val comma
-    key="${!i}"
-    i=$((i + 1))
-    val="${!i}"
-    i=$((i + 1))
-    if [[ $i -gt $# ]]; then
-      comma=""
-    else
-      comma=","
-    fi
-    printf '  "%s": "%s"%s\n' "$key" "$val" "$comma" >> "$file"
-  done
-  printf '}\n' >> "$file"
 }
 
 # ---- sync ----
@@ -105,74 +109,75 @@ write_integrity_json() {
 echo "sync-plugin: $PLUGIN_NAME"
 echo ""
 
-local_count=${#FROM_PATHS[@]}
+# Step 1: Clear and recreate target
+if [[ -d "$TARGET_DIR" ]]; then
+  echo "  clear: $TARGET_DIR"
+  rm -rf "$TARGET_DIR"
+fi
+mkdir -p "$TARGET_DIR"
+
+# Step 2: rsync each source
 synced=0
 skipped=0
-failed=0
 
-for ((i = 0; i < local_count; i++)); do
-  from="${FROM_PATHS[$i]}"
-  to="${TO_PATHS[$i]}"
-  dest="$PLUGIN_DIR/$to"
-
-  if [[ ! -d "$from" ]]; then
-    echo "  [skip] source not found: $from"
+for src in "${SOURCES[@]}"; do
+  if [[ ! -d "$src" ]]; then
+    echo "  [skip] source not found: $src"
     skipped=$((skipped + 1))
     continue
   fi
-
-  echo "  $from → $to"
-  mkdir -p "$dest"
-  if rsync -a --delete "$from/" "$dest/"; then
-    synced=$((synced + 1))
-  else
-    echo "  [FAIL] rsync error" >&2
-    failed=$((failed + 1))
-  fi
+  name="$(basename "$src")"
+  echo "  sync: $src → $TARGET/$name"
+  rsync -a --delete "$src/" "$TARGET_DIR/$name/"
+  synced=$((synced + 1))
 done
 
 echo ""
-echo "  synced: $synced  skipped: $skipped  failed: $failed"
+echo "  synced: $synced  skipped: $skipped"
 echo ""
 
-[[ $failed -gt 0 ]] && abort "rsync failures detected"
+# Step 3: Compute hash and compare
+new_hash="$(dir_hash "$TARGET_DIR")"
+old_hash="$(read_json_str "$INTEGRITY_JSON" "hash")"
 
-# ---- integrity ----
+if [[ -z "$new_hash" ]]; then
+  abort "target is empty after sync: $TARGET_DIR"
+fi
 
+if [[ "$new_hash" == "$old_hash" ]]; then
+  version="$(read_json_str "$INTEGRITY_JSON" "version")"
+  echo "Up to date (v${version:-?})"
+  exit 0
+fi
+
+# Step 4: Bump version
+current_version="$(read_json_str "$INTEGRITY_JSON" "version")"
+if [[ -z "$current_version" ]]; then
+  current_version="$(read_json_str "$CLAUDE_MANIFEST" "version")"
+fi
+if [[ -z "$current_version" ]]; then
+  current_version="0.0.0"
+fi
+is_semver "$current_version" || abort "invalid semver: $current_version"
+new_version="$(bump_patch "$current_version")"
+
+echo "  changed: $old_hash → $new_hash"
+echo "  version: $current_version → $new_version"
+echo ""
+
+# Step 5: Write integrity.json
 mkdir -p "$(dirname "$INTEGRITY_JSON")"
+printf '{\n  "version": "%s",\n  "hash": "%s"\n}\n' "$new_version" "$new_hash" > "$INTEGRITY_JSON"
 
-INTEGRITY_PAIRS=()
-changed=0
-unchanged=0
-created=0
-
-for ((i = 0; i < local_count; i++)); do
-  to="${TO_PATHS[$i]}"
-  dest="$PLUGIN_DIR/$to"
-
-  new_hash="$(dir_hash "$dest")"
-  old_hash="$(read_integrity_hash "$INTEGRITY_JSON" "$to")"
-
-  INTEGRITY_PAIRS+=("$to" "$new_hash")
-
-  if [[ -z "$new_hash" ]]; then
-    echo "  $to: empty (no files)"
-    continue
-  fi
-
-  if [[ -z "$old_hash" ]]; then
-    echo "  $to: created (→ $new_hash)"
-    created=$((created + 1))
-  elif [[ "$new_hash" == "$old_hash" ]]; then
-    echo "  $to: up to date"
-    unchanged=$((unchanged + 1))
-  else
-    echo "  $to: updated ($old_hash → $new_hash)"
-    changed=$((changed + 1))
-  fi
-done
-
-write_integrity_json "$INTEGRITY_JSON" "${INTEGRITY_PAIRS[@]}"
+# Step 6: Write plugin manifests
+if [[ -f "$CLAUDE_MANIFEST" ]]; then
+  write_manifest_version "$CLAUDE_MANIFEST" "$new_version"
+  echo "  updated: .claude-plugin/plugin.json"
+fi
+if [[ -f "$CODEX_MANIFEST" ]]; then
+  write_manifest_version "$CODEX_MANIFEST" "$new_version"
+  echo "  updated: .codex-plugin/plugin.json"
+fi
 
 echo ""
-echo "  created: $created  updated: $changed  up to date: $unchanged"
+echo "Updated to v$new_version"

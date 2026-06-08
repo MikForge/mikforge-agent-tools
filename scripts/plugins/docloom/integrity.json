@@ -1,13 +1,4 @@
 {
-  "skills/docloom": "aa3aed38e61a6e0204caf827cf8f9507",
-  "skills/docloom-author": "748006c7512311e33bdb66139630e39f",
-  "skills/docloom-brainstorm": "b74ceabbf173ddc582cc8b6a1674f0ab",
-  "skills/docloom-build-spec": "be8b1432eb9cbc49f9bb75c7586c4642",
-  "skills/docloom-entropy": "781303a2364a4b007303ceb69bdb5c4f",
-  "skills/docloom-feedback": "e6668af0c65eb8e99d014419e4cb6f75",
-  "skills/docloom-fix": "73033bd6b200091b0a1ed5035add642f",
-  "skills/docloom-init": "a769922cb920eca29dd79f2a961c8d86",
-  "skills/docloom-register": "",
-  "skills/docloom-review-auto-fix": "ce9fd4ffb429a4755dc2fd70426b1bc3",
-  "skills/docloom-reviewer": "bf6cc6c261d7f8c4e7311edc136c2b3f"
+  "version": "1.0.8",
+  "hash": "b635219f5840fbd68a9d2b1211f07212"
 }

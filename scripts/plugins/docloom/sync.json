@@ -1,48 +1,13 @@
 {
-  "sync": [
-    {
-      "from": "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom",
-      "to": "skills/docloom"
-    },
-    {
-      "from": "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom-author",
-      "to": "skills/docloom-author"
-    },
-    {
-      "from": "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom-brainstorm",
-      "to": "skills/docloom-brainstorm"
-    },
-    {
-      "from": "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom-build-spec",
-      "to": "skills/docloom-build-spec"
-    },
-    {
-      "from": "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom-entropy",
-      "to": "skills/docloom-entropy"
-    },
-    {
-      "from": "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom-feedback",
-      "to": "skills/docloom-feedback"
-    },
-    {
-      "from": "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom-fix",
-      "to": "skills/docloom-fix"
-    },
-    {
-      "from": "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom-init",
-      "to": "skills/docloom-init"
-    },
-    {
-      "from": "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom-register",
-      "to": "skills/docloom-register"
-    },
-    {
-      "from": "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom-review-auto-fix",
-      "to": "skills/docloom-review-auto-fix"
-    },
-    {
-      "from": "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom-reviewer",
-      "to": "skills/docloom-reviewer"
-    }
-  ]
+  "source": [
+    "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom",
+    "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom-author",
+    "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom-brainstorm",
+    "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom-build-spec",
+    "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom-entropy",
+    "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom-feedback",
+    "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom-fix",
+    "/Users/michael/Desktop/gitfiles/ai_tools_in_work/.agents/skills/docloom-init"
+  ],
+  "target": "plugins/docloom/skills"
 }
