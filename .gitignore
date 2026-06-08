@@ -1,0 +1,11 @@
+# Whitelist: ignore everything by default
+/*
+
+# Allow these top-level paths to be committed
+!/.agents/
+!/.claude-plugin/
+!/plugins/
+!/scripts/
+!/README.md
+!/README.*
+!/.gitignore
