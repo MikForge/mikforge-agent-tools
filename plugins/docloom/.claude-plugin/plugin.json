@@ -1,7 +1,7 @@
 {
-  "version": "1.0.8",
+  "version": "1.1.0",
   "name": "docloom",
-  "description": "Closed-loop documentation quality pipeline — init, register, brainstorm, build-spec, author, review, fix, and entropy analysis for continuous spec improvement.",
+  "description": "Closed-loop documentation quality pipeline — init, spec-writer, author, fix, and entropy analysis. New users: start with /docloom-init to set up your project.",
   "author": {
     "name": "MikForge",
     "url": "https://github.com/MikForge"

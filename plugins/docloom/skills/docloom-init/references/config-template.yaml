@@ -1,3 +1,3 @@
-# document_types: 每个文档类型定义 spec、review、output_dir、feedback_dir
-# 初始为空，通过 docloom-register(mode=add) 按需注册
+# document_types: 每个文档类型定义 spec、output_dir、feedback_dir
+# 初始为空，通过 docloom-register 按需注册
 document_types: {}

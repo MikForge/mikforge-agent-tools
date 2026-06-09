@@ -9,3 +9,8 @@
 !/README.md
 !/README.*
 !/.gitignore
+
+# Ignore all other files and directories
+.agents/skills/***
+scriptspluginsdocloom
+scripts

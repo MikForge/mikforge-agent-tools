@@ -1,88 +1,78 @@
 ---
 name: docloom-author
-description: Use when generating structured document drafts with automated review and fix pipeline in docloom.
+description: Use when generating structured document drafts with layered spec validation in docloom.
 metadata:
-  version: "4.0"
+  version: "5.0"
 ---
 
 # docloom-author
 
 ## 目标
 
-docloom 编排层——接收 `doc_type`（必填）、`context`（可选）。先加载 spec + `../docloom/references/base.spec.md` 获取章节清单。`context` 缺失则调 `docloom-brainstorm` 逐章收集内容，存在则直接生成。落盘后依次调 `reviewer` → `feedback` → `review-auto-fix`，产出审查+修复后的文档。commit。
+docloom 编排层——接收 doc_type，按 [base.spec.md][docloom-base-spec] + `<type>.spec.md` 双层规范生成文档，落盘后强制执行审查 → feedback → 修复 → commit。
 
-## 适用判断
+## 非目的
 
-需要在 docloom 流水线中生成文档草稿时使用。
+不跳过审查链——审查和修复是强制执行步骤，不可省略。不支持跨类型 spec 生成——每种 doc_type 使用自身对应的 spec。
 
-## 前置条件
+## 参数
 
-- `docs/loom/config.yaml` 存在且含目标 `doc_type`
-- `../docloom/references/base.spec.md` 可访问
-- `docloom-brainstorm` 可用（context 缺失时）
-- `docloom-reviewer`、`docloom-review-auto-fix` 可用
+- **`doc_type`** — string，必填。目标文档类型，必须在 [config.yaml][docloom-config] 中已注册。
+- **`context`** — string，可选。用户提供的上下文，作为 brainstorm 候选方案参考。
 
-## 执行步骤
+## 收集参数
 
-### 声明参数
+brainstorm 返回的自然语言摘要——从中提取各章决策，按 spec 章节结构组装文档正文和 frontmatter。
 
-- **`doc_type`** — string，必填。文档类型键名，对应 config.yaml 中 `document_types`
-- **`context`** — string，可选。文档内容上下文
+## 流程
 
-### 流程
-
-1. 接收 `doc_type`（必填）、`context`（可选）
-2. 根据 `doc_type` 查询 `docs/loom/config.yaml`，获取 `spec` 路径和 `output_dir`
-   - `doc_type` 不存在 → 报错列出有效类型
-3. 根据 `spec` 路径加载 `<type>.spec.md` + `../docloom/references/base.spec.md`，获取章节清单
-4. 根据 `context` 状态决定生成方式
-   - `context` 缺失 → 调用 `docloom-brainstorm`，传入 `topic=author`、`context=章节清单`，返回逐章确认后的内容
-   - `context` 存在 → 按 context 逐章生成文档
-5. 写入 frontmatter（`type: <doc_type>`）→ 落盘到 `output_dir/<doc_type>-<timestamp>.md`
-6. 调用 `reviewer`，传入 `doc_path=<刚生成的文档路径>`，返回 `issues[]`
-7. 调用 `feedback`，传入 `doc_path`、`issues[]`、`source=author`，返回 `note_path`
-8. 调用 `review-auto-fix`，传入 `note_path`，返回修复结果
-9. commit
-
-### 约束
-
-- **落盘后强制调 reviewer → feedback → review-auto-fix**——确保文档输出即达标
-- `doc_type` 必填——没有 doc_type 无法确定用哪份 spec
-- 任一子 skill 报错 → 终止，不 commit
-
-## 示例
-
-### 场景 A：全自动生成（正常）
-
-参数：doc_type=design, context="系统架构：前后端分离，React + TS 前端，Go + PostgreSQL 后端"
-
-1. 查 config → spec + output_dir ✅
-2. 加载 spec → 直接按 context 逐章生成
-3. 落盘 → reviewer 审查 → 3 issues → feedback 生成 note → review-auto-fix 自动修复 → commit
-
-### 场景 B：交互收集（缺 context）
-
-参数：doc_type=prd
-
-1. 查 config → spec ✅
-2. context 缺失 → docloom-brainstorm(topic=author) → 逐章一问一答 → 用户确认内容
-3. 落盘 → 审查链路 → commit
-
-### 场景 C：doc_type 不存在（异常）
-
-参数：doc_type=unknown
-
-- 报错："unknown 不存在于 config.yaml。可用类型：api-doc, design, plan, ..."
+确认 doc_type 齐备（缺失 → 报错终止——没有 doc_type 无法确定 spec 和 output_dir）
+→ 查 [config.yaml][docloom-config]，获取 spec 路径和 output_dir
+    - doc_type 不存在 → 报错列出有效类型
+→ 检查 spec 文件存在性：
+    - [base.spec.md][docloom-base-spec] 不存在 → 收集缺失项
+    - `<type>.spec.md` 不存在 → 收集缺失项
+    - 存在任何缺失 → 一次性报错列出所有缺失路径，终止——并行检查，一次报全
+    - 全部存在 → 加载两层 spec，合并规则
+——base.spec.md 定义通用写作约束，<type>.spec.md 定义类型专属章节结构，两层同等生效
+→ 调 docloom-brainstorm，传入场景描述：
+    "用户需要撰写一份 {doc_type} 文档。规范要求：{spec 章节结构摘要}。base 通用约束：{base 约束摘要}。用户提供的上下文：{context 或 '无'}。请与用户协作确认文档的整体方案和各章节内容。"
+→ docloom-brainstorm 返回自然语言摘要——从「用户确认方案」中提取各章决策，组装文档正文
+——spec 定义了必须覆盖的章节，brainstorm 负责确认每章写什么、怎么写
+→ 写入 frontmatter（`type: <doc_type>`）→ 落盘到 `output_dir/<doc_type>-<timestamp>.md`
+→ 审查与修复：
+    - 调 reviewer（source=author）→ 收集 issues[]
+    - 生成 feedback_note → 按 review-auto-fix 步骤修复
+    - 任一阶段报错 → 终止，不 commit——未经审查的文档禁止进入仓库
+→ commit
 
 ## 验证
 
-- 生成后验证文档存在于 `output_dir`，frontmatter 含正确的 `type`
-- 验证 `reviewer` 已调用（issues[] 非空或为空均有返回）
-- 验证 `feedback_note` 文件存在于 `feedback_dir`
-- 验证 commit 已执行
+```bash
+grep -q "## 目标" SKILL.md && grep -q "## 非目的" SKILL.md && grep -q "## 参数" SKILL.md && grep -q "## 流程" SKILL.md && grep -q "base.spec.md" SKILL.md && grep -q "docloom-brainstorm" SKILL.md && grep -q "场景描述" SKILL.md && grep -q "自然语言摘要" SKILL.md
+```
 
-## FAQ
+- [ ] 生成后验证文档存在于 output_dir，frontmatter 含正确的 type
+- [ ] 验证 reviewer 已调用（issues[] 非空或为空均有返回）
+- [ ] 验证 feedback_note 文件存在于 feedback_dir
+- [ ] 验证 commit 已执行
 
-**Q: 为什么 author 调 reviewer 但不调 fix？**
+## 示例
 
-A: author → reviewer → review-auto-fix 是自动化闭环——生成、审查、修复一次性完成。fix 是用户手动入口（交互式），与 author 的自动化定位不同。用户读 feedback_note 后如需手动干预，自行调 fix。
+> **正例：**
+>
+> doc_type=design, context="系统架构：前后端分离，React + TS 前端，Go + PostgreSQL 后端"
+> → 查 config → spec ✅ → 加载 base.spec.md + design.spec.md ✅
+> → brainstorm（传入场景描述：文档类型 + 规范要求 + 用户上下文）
+>   → 用户确认：背景用痛点驱动、目标从性能瓶颈反推、架构用分层图
+> → 从摘要提取各章决策 → 组装文档 + frontmatter → 落盘
+> → reviewer 审查 → 3 issues → feedback 生成 note → 自动修复 → commit。
+
+> **反例：**
+>
+> doc_type=design → 审查发现 3 issues → 跳过修复直接 commit。
+>
+> 审查 → feedback → 修复链强制执行，任何环节不可跳过。跳过审查意味着未经 spec 验证的文档进入了仓库——后续所有消费者（reviewer、entropy）都将基于不合规文档工作。
+
+[docloom-config]: ../../docs/loom/config.yaml
+[docloom-base-spec]: ../docloom/references/base.spec.md

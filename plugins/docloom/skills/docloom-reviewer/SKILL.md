@@ -1,101 +1,75 @@
 ---
 name: docloom-reviewer
-description: Use when reviewing a document against spec-derived checklist returning issues array.
+description: Use when reviewing documents and generating structured feedback_note files in the docloom pipeline.
 user-invocable: false
 metadata:
-  version: "5.0"
+  version: "2.0"
 ---
 
 # docloom-reviewer
 
 ## 目标
 
-纯函数文档审查器——接收 `doc_path`，从 `<type>.spec.md` 规则 1:1 提取检查+严重度构造审查清单，从 `../docloom/references/base.spec.md` 追加通用检查项，逐项对照文档审查，返回 `issues[]`。只审不修，不调任何其他 skill。
+审查 + feedback-note 生成合并入口——接收 doc-path + source + 可选的 issues[]，加载双层 spec 审查文档，按 [entry-schema.md][docloom-entry-schema] 格式化发现并落盘 feedback_note。
 
-## 适用判断
+## 非目的
 
-被 `docloom-author` 内部调用——author 生成文档后自动调本 skill 执行审查。用户不直接触发。
+只审不修——不修改被审文档、不调其他 skill、不执行修复动作。entry-schema 和 feedback-note.spec 的读取对调用方透明。
 
-## 前置条件
+## 参数
 
-- `doc_path` 指向的 `.md` 文件存在且可读
-- `docs/loom/config.yaml` 存在且含 `document_types` 定义
-- `../docloom/references/base.spec.md` 可访问
+- **`doc-path`** — string，必填。被审文档路径。
+- **`source`** — `fix | author`，必填。`author`=纯审查模式（issues[] 为空），`fix`=用户手动修复（issues[] 必填）。
+- **`issues[]`** — string[]，source=fix 时必填。自然语言描述的问题列表。
 
-## 执行步骤
+## 收集参数
 
-### 声明参数
+无——所有信息从参数和 spec 文件获取。
 
-- **`doc_path`** — string，必填。待审文档的相对路径。
+## 流程
 
-⚠️ `doc_path` 未提供 → 报错终止。
-
-### 审查流程
-
-1. 接收 `doc_path`
-2. 根据 `doc_path` 读取文档 frontmatter，获取 `type` 字段
-   - 无 `type` 字段 → 报错："文档缺少 type 字段，无法确定审查规范"
-3. 根据 `type` 查询 `docs/loom/config.yaml`，获取 `spec` 路径
-   - `type` 不存在 → 报错列出所有有效类型
-4. 根据 `spec` 路径加载 `<type>.spec.md`，解析 `### XXX-NNN` 规则
-5. 逐规则提取 `**检查：**` + `**严重度：**` 字段，构造审查清单（1:1）
-   - ⚠️ 规则缺少 `**检查：**` 字段 → 跳过该规则，记录 warn
-   - spec 无任何规则 → 报错
-6. 根据 `../docloom/references/base.spec.md` 追加通用规范检查项
-7. 逐检查项对照文档内容审查，收集不通过项
-8. 返回 `issues[]`，每条含：
-   - `title` — 问题标题
-   - `severity` — 严重度（严重 / 重要 / 轻微）
-   - `location` — 问题定位（章节:行号）
-   - `description` — 具体问题描述
-   - `spec_source` — 触发域（base / `<type>`）
-   - `specid` — 触发规则编号（XXX-NNN）
-
-### 约束
-
-- **只审不修**——不修改被审文档
-- **不调其他 skill**——不调 feedback、不调 fix、不调 brainstorm
-- **纯函数**——仅从输入参数推导结果，无副作用
-- 任一必需文件缺失 → 报错给出路径，不静默跳过
-
-## 示例
-
-### 场景 A：正常审查
-
-参数：doc_path=docs/00-project-knowledge-base/02-technology-layer/04-api-docs/auth-api.md
-
-1. 读 frontmatter → type=api-doc ✅
-2. 查 config → spec=docs/loom/specs/api-doc.spec.md
-3. 加载 spec → 解析 15 条规则 → 构造 15 项审查清单
-4. 追加 base.spec.md 通用检查项（+3 项）→ 共 18 项
-5. 逐项审查 → 发现 3 项不通过
-6. 返回 issues[3]
-
-### 场景 B：文档缺少 type
-
-参数：doc_path=docs/some-doc.md
-
-- frontmatter 无 `type` 字段 → 报错
-
-### 场景 C：type 不在 config 中
-
-参数：doc_path=docs/loom/some-unknown.md
-
-- frontmatter type=unknown-type
-- config.yaml 无 unknown-type → 报错列出有效类型
+验证 doc-path 存在、source 为 fix 或 author
+    - doc-path 不存在 → 报错终止
+    - source 不是 fix 或 author → 报错终止
+    - source=fix 且 issues[] 为空 → 报错终止
+→ 读 doc-path frontmatter 获取 type
+    - type 缺失 → 报错终止——无法定位 spec
+→ 加载 base.spec.md（硬编码 `.agents/skills/docloom/references/base.spec.md`）+ `docs/loom/specs/<type>.spec.md`
+    - 任一不存在 → 一次性列出缺失路径，报错终止
+    - spec 中无有效规则 → 报错终止
+→ 逐检查项对照文档内容审查，收集不通过项
+→ issues[] 非空时逐条解析自然语言匹配 spec 规则——无法匹配 → specid=uncategorized，不阻断
+→ 按 [entry-schema.md][docloom-entry-schema] 格式化所有发现为 Entry——初始 status 统一为"未处理"
+→ 按 [feedback-note.spec.md][docloom-feedback-note-spec] 组装 Header
+→ 命名 `<type>-<timestamp>-feedback-note.md` 落盘到 `docs/loom/feedback/<type>/`
+    - 目录不存在 → 自动创建（失败则报错）
+→ 返回 note_path
+——审查全通过 + issues[] 为空时仍生成文件，Header 标注"审查结论：通过"，Entry 列表为空
 
 ## 验证
 
-- 调用后验证返回值为数组，每条含 title / severity / location / description / spec_source / specid
-- 验证未修改被审文档（文件内容不变）
-- 验证检查项数 = spec 规则数 + base 检查项数（扣除缺检查字段的规则）
+```bash
+grep -q "## 目标" SKILL.md && grep -q "## 非目的" SKILL.md && grep -q "## 参数" SKILL.md && grep -q "## 流程" SKILL.md && grep -q "source" SKILL.md && grep -q "entry-schema" SKILL.md
+```
 
-## FAQ
+- [ ] 生成后验证 feedback_note 文件存在且命名符合 `<type>-<timestamp>-feedback-note.md`
+- [ ] 验证 Entry 的 status 字段为 "未处理"
+- [ ] 零 issues 时验证 Header 含 "审查结论：通过"
 
-**Q: 为什么不调 feedback 生成 feedback_note？**
+## 示例
 
-A: reviewer 是纯函数——只审查不记录。feedback_note 生成由 author 编排层负责。职责分离让 author 可以灵活决定审查结果的处理方式。
+> **正例：**
+>
+> doc-path=docs/design-docs/feature.md, source=author
+> → 验证通过 → type=design → 加载 base.spec.md + design.spec.md ✅
+> → 15 项审查清单 → 3 项不通过 → 格式化 3 条 Entry → 落盘 → 返回 note_path。
 
-**Q: base.spec.md 路径为什么用相对路径？**
+> **反例：**
+>
+> doc-path=docs/api-docs/endpoints.md, source=fix（issues[] 为空）
+> → 步骤 1：source=fix 但 issues[] 为空 → 报错「fix 模式下 issues[] 必须非空」。
+>
+> fix 模式必须有自然语言描述的问题，否者 reviewer 无法区分哪些 Entry 来自审查发现、哪些来自用户报告。
 
-A: `../docloom/references/base.spec.md` 从 skill 目录（`.agents/skills/docloom-reviewer/`）往上一级即可定位到共享目录。所有 docloom skill 使用统一的相对路径约定。
+[docloom-entry-schema]: ../docloom/references/entry-schema.md
+[docloom-feedback-note-spec]: ../docloom/references/feedback-note.spec.md

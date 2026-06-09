@@ -1,15 +1,15 @@
 {
-  "version": "1.0.8",
+  "version": "1.1.0",
   "name": "docloom",
-  "description": "闭环文档质量流水线 — 初始化、注册、头脑风暴、构建规格、编写、审查、修复、熵分析，持续改进文档质量。",
+  "description": "闭环文档质量流水线 — 初始化、编写规格、编写文档、审查修复、熵分析，持续改进文档质量。",
   "author": {
     "name": "MikForge"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "Docloom",
-    "shortDescription": "快速上手：/docloom-init 初始化项目 → /docloom-build-spec 生成规格 → /docloom-author 编写文档。完成后用 /docloom-fix 修复问题，/docloom-entropy 驱动演进。",
-    "longDescription": "初始化（init）：/docloom-init 初始化项目文档体系，注册文档类型，建立规格目录结构，为后续流水线打好基础。构建规格（build-spec）：/docloom-build-spec 根据注册的文档类型，交互式生成结构化规格文档，明确每个文档应包含的章节、字段和质量标准。编写（author）：/docloom-author 基于已生成的规格，进行结构化文档编写，确保输出严格遵循规格定义。修复（fix）：/docloom-fix 对照规格自动审查已有文档，发现偏离规格的问题并辅助修复。熵管理（entropy）：/docloom-entropy 分析历史修复记录，识别高频修复模式，将修复反馈回规格，实现规格的持续演进与收敛。",
+    "shortDescription": "新手快速开始：/docloom-init 初始化 → /docloom-spec-writer 编写文档规格 → /docloom-author 生成文档。完成后用 /docloom-fix 审查修复，/docloom-entropy 持续优化。",
+    "longDescription": "初始化（init）：/docloom-init 初始化项目文档体系，建立规格目录结构，为后续流水线打好基础。编写规格（spec-writer）：/docloom-spec-writer 根据你的想法，交互式创建新的文档类型规格，或编辑已有规格；支持创建和编辑两种模式。编写（author）：/docloom-author 基于已生成的规格，进行结构化文档编写，确保输出严格遵循规格定义。修复（fix）：/docloom-fix 对照规格自动审查已有文档，发现偏离规格的问题并辅助修复。熵管理（entropy）：/docloom-entropy 分析历史修复记录，识别高频修复模式，将修复反馈回规格，实现规格的持续演进与收敛。",
     "developerName": "MikForge",
     "category": "开发者工具",
     "capabilities": [
@@ -21,7 +21,7 @@
     "websiteURL": "https://github.com/MikForge/mikforge-agent-tools",
     "defaultPrompt": [
       "初始化项目文档体系",
-      "为这个模块生成结构化规格文档",
+      "创建一个新的文档规格",
       "基于规格编写这份文档"
     ]
   }
